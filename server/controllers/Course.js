@@ -65,3 +65,38 @@ exports.showAllCourses = async (req,res) =>{
         return res.status(500).json({success : false , message : "Issue while showing all course"})
     }
 }
+
+exports.courseDetails = async (req,res) =>{
+    try {
+        const {courseId} = req.body ;
+
+        if(!courseId){
+            return res.status(400).json({success : false , message : "Fill courseId"})
+        }
+        const course = await Course.findById(courseId)
+            .populate({
+                path : "courseContent",
+                populate:{
+                    path : "subSection"
+                }
+            })
+            .populate({
+                path : "instructor",
+                populate:{
+                    path : "subSection"
+                }
+            })
+            .populate("ratingAndReviews")
+            .populate("category")
+            .populate("studentsEnrolled")
+            .exec()
+
+        if(!course){
+            return res.status(500).json({success : false , message : "Invalid courseId"})
+        }
+
+        return res.status(200).json({success : true , message : "Course details fetched successfuly" , data : course})
+    } catch (error) {
+        return res.status(500).json({success : false , message : "Issue while fetching course data"})
+    }
+}

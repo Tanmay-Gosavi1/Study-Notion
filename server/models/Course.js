@@ -15,13 +15,19 @@ const courseSchema = new mongoose.Schema({
         type : Number , 
         required : true 
     },
-    instructor : {
-        type : mongoose.Schema.Types.ObjectId ,
-        ref : "User"
-    },
+    instructor : [
+        {
+            type : mongoose.Schema.Types.ObjectId ,
+            ref : "User"
+        }
+    ],
     whatYouWillLearn : {
         type : String
     },
+    tags : {
+        type : [String],
+        required : true
+    } ,
     courseContent : [
         {
             type : mongoose.Schema.Types.ObjectId,
@@ -48,7 +54,14 @@ const courseSchema = new mongoose.Schema({
             required : true ,
             ref : "User"
         }
-    ]
+    ] ,
+    instruction : {
+        type : [String]
+    },
+    status : {
+        type : String ,
+        enum : ["Draft" , "Published"]
+    }
 })
 
 module.exports = mongoose.model("Course" , courseSchema) ;
