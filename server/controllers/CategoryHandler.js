@@ -28,3 +28,29 @@ exports.showAllCategory = async (req,res)=>{
         return res.status(500).json({success:false , message : "Error while creating category"})
     }
 }
+
+exports.categoryPage = async (req,res) =>{
+    try {
+        const {categoryId} = req.body
+
+        const selectedCategory =  await Category.findById(categoryId).populate("courses").exec()
+
+        if(!selectedCategory){
+            return res.status(404).json({success : false , message : "Category page not found"})
+        }
+
+        const differentCategory = await Category.find({
+            _id : {
+                $ne : selectedCategory._id
+            }
+        })  
+
+        return res.status(200).json({success : true , message : "Category page fetched succussfully " , data :{
+            selectedCategory , 
+            differentCategory
+        }})
+        
+    } catch (error) {
+        return res.status(500).json({success:false , message : "Error while fetching category page "})
+    }
+}
