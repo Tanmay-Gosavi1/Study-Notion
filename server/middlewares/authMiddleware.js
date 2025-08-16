@@ -2,10 +2,10 @@ const jwt = require('jsonwebtoken')
 require('dotenv').config()
 
 //token se data decode kr liya
-const verifyToken = async(req,res,next)=>{
+const auth = async(req,res,next)=>{
     let token ;
     const authHeader = req.headers.authorization
-    if(authHeader || authHeader.startsWith('Bearer')){
+    if(authHeader && authHeader.startsWith('Bearer')){
         token = authHeader.split(" ")[1]
         if(!token){
             return res.status(401).json({message : "No token , authorization denied"})
@@ -33,9 +33,9 @@ const verifyToken = async(req,res,next)=>{
 const authorizeRole = (...allowedRoles)=>{
     return (req,res,next) =>{
         if(!allowedRoles.includes(req.user.accountType)){
-            res.status(404).json({success:false , message : "Access denied"})
+            return res.status(403).json({success:false , message : "Access denied"})
         }
         next()
     }
 }
-module.exports = {verifyToken , authorizeRole}
+module.exports = {auth , authorizeRole}

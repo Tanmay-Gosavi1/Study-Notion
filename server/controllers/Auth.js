@@ -45,9 +45,11 @@ const sendOTP = async (req, res) => {
 
     await newOTP.save();
 
+    await mailSender(email , "Verify OTP" , `OTP is ${otp}`)
+
     return res
       .status(200)
-      .json({ success: true, message: "OTP send successfully" });
+      .json({ success: true, message: "OTP send successfully" , otp});
   } catch (error) {
     return res.status(500).json({success:false , message : error.message})
   }
@@ -56,16 +58,16 @@ const sendOTP = async (req, res) => {
 //signup
 const signup = async (req, res) => {
     //Data fetch and validate
-    const {firstName , lastName , email , password , cnfPassword , accountType, otp} = req.body
-    if(!firstName || !lastName || !email || !password || !cnfPassword || !accountType || !otp){
+    const {firstName , lastName , email , password , confirmPassword , accountType, otp} = req.body
+    if(!firstName || !lastName || !email || !password || !confirmPassword || !accountType || !otp){
         return res.status(400).json({success:false , message : "Incomplete credentials"})
     }
 
     try {
         //password match
-        if(password!==cnfPassword){
+        if(password!==confirmPassword){
             return res
-            .status(401)
+            .status(400)
             .json({ success: false, message: "passwords not match to each other " });
         }
 
@@ -77,16 +79,16 @@ const signup = async (req, res) => {
             .json({ success: false, message: "User already exists" });
         }
         //find OTP
-        const recentOtp = await OTP.find({email}).sort({createdAt:-1}).limit(1)
-
+        const recentOtp = await OTP.findOne({email}).sort({createdAt:-1}).limit(1)
         //OTP verification
-        if(recentOtp.length == 0){
+        if(!recentOtp){
             return res.status(400).json({
                 success : false ,
                 message : "OTP not Found"
             })
         }
-        else if(otp != recentOtp.otp){
+        
+        else if(otp !== recentOtp.otp){
             return res.status(400).json({
                 success : false ,
                 message : "Invalid OTP"
@@ -179,9 +181,11 @@ const changePassword  = async (req,res) =>{
         if(newPassword !== confirmNewPassword){
             return res.status(401).json({success:false , message : "Passwords not match"})
         }
+        // console.log("hii")
 
         //find user
-        const user = await User.findOne(req.user.id)
+        const user = await User.findById(req.user.id)
+        // console.log(user)
         if(!user){
             return res.status(400).json({success : false , message : "User not found"})
         }

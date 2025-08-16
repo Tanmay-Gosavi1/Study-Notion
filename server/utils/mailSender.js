@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer')
+const contactOwnerMailTemplate = require('../utils/templetes/mail.js')
 require('dotenv').config()
 
 const mailSender = async (email , title , body)=>{
@@ -13,16 +14,15 @@ const mailSender = async (email , title , body)=>{
         })
 
         const response = await transporter.sendMail({
-            from : "Study Notion" ,
+            from: process.env.SENDER,
             to : `${email}` ,
             subject : `${title}`,
             html : `${body}`
         })
-
-        console.log(response)
+        // console.log(response)
     } catch (error) {
         console.log("Issue while sending mail")
-        console.log(error.message)
+        console.log(error)
 
     }
 }

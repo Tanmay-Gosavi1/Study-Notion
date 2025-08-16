@@ -1,14 +1,14 @@
 const User = require('../models/User.js')
 const Category = require('../models/Category.js')
 const Course = require('../models/Course.js')
-const {uploadImageToCloudinary} = require('../utils/imageUpload.js')
+const {imageUpload} = require('../utils/imageUpload.js')
 
 exports.createCourse = async (req,res) =>{
     try {
-        const {courseName , courseDescription , price , whatYouWillLearn , category} = req.body
-        const thumbnail = req.files.thumbnailImage
+        const {courseName , courseDescription , price , whatYouWillLearn , category , tags , instruction} = req.body
+        const thumbnail = req.files.thumbnail
 
-        if(!courseName || !courseDescription || !price || !whatYouWillLearn || !category || !thumbnail){
+        if(!courseName || !courseDescription || !price || !whatYouWillLearn || !category || !thumbnail || !tags || !instruction){
             return res.status(400).json({success : false , message:"All fields are required"})
         }
 
@@ -25,9 +25,9 @@ exports.createCourse = async (req,res) =>{
         if(!categoryDetails){
             return res.status(403).json({success : false , message : "Category details not found"})
         }
-
-        const thumbnailImage = await uploadImageToCloudinary(thumbnail , process.env.FOLDER_NAME)    
-        
+        // console.log("Hii")
+        const thumbnailImage = await imageUpload(thumbnail , process.env.FOLDER_NAME)    
+        // console.log("Hii")
         //create an entry for new course
         const newCourse = await Course.create({
             courseName , courseDescription , whatYouWillLearn , price , 
@@ -35,22 +35,22 @@ exports.createCourse = async (req,res) =>{
             category : categoryDetails._id ,
             thumbnail : thumbnailImage.secure_url
         })
-
+        // console.log("Hii")
         //Instructor ke courses mei ye course bhi add ho jana chahiye
         await User.findByIdAndUpdate({_id : instructorDetails._id}, {
             $push : {
                 courses : newCourse._id
             }
         },{new:true})
-
+        // console.log("Hii")
         //Update category ka schema
         await Category.findByIdAndUpdate({_id:categoryDetails._id} , {
             $push : {
                 courses : newCourse._id
             }
         })
-
-        return res.status(200).json({success:true , message :"New Course created successfully"})
+        // console.log("Hii")
+        return res.status(200).json({success:true , message :"New Course created successfully" , newCourse})
     } catch (error) {
         return res.status(500).json({success : false , message : "Issue while creating a course"})
     }
@@ -81,10 +81,7 @@ exports.courseDetails = async (req,res) =>{
                 }
             })
             .populate({
-                path : "instructor",
-                populate:{
-                    path : "subSection"
-                }
+                path : "instructor"
             })
             .populate("ratingAndReviews")
             .populate("category")
@@ -95,8 +92,35 @@ exports.courseDetails = async (req,res) =>{
             return res.status(500).json({success : false , message : "Invalid courseId"})
         }
 
-        return res.status(200).json({success : true , message : "Course details fetched successfuly" , data : course})
+        return res.status(200).json({success : true , message : "Course details fetched successfuly" , course})
     } catch (error) {
         return res.status(500).json({success : false , message : "Issue while fetching course data"})
+    }
+}
+
+exports.editCourse = async (req,res) =>{
+    try {
+        const {courseName , courseDescription , price , whatYouWillLearn , categoryId , tags , instruction , courseId } = req.body
+        const thumbnail = req.files.thumbnail
+
+        if(!courseName || !courseDescription || !price || !whatYouWillLearn || !categoryId || !thumbnail || !tags || !instruction || !courseId ){
+            return res.status(400).json({success : false , message:"All fields are required"})
+        }
+
+        const course = await Course.findById(courseId)
+        if(!course){
+            return res.status(400).json({success:false , message : "Invalid courseId"})
+        }
+
+        const thumbnailImage = await imageUpload(thumbnail , process.env.FOLDER_NAME)
+
+        await Course.findByIdAndUpdate(courseId , {
+            courseName , courseDescription , price , whatYouWillLearn  , tags , instruction , thumbnail : thumbnailImage.secure_url , category : categoryId
+        })
+
+        return res.status(200).json({success : true , message : "Course Updated Successfully"})
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({success:false, message :"Issue while updating course"})
     }
 }

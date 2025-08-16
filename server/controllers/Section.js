@@ -1,5 +1,6 @@
 const Section = require('../models/Section.js')
 const Course = require('../models/Course.js')
+const SubSection = require('../models/SubSection.js')
 
 exports.createSection = async (req,res) =>{
     try {
@@ -47,19 +48,38 @@ exports.updateSection = async (req,res) =>{
 
 exports.deleteSection = async (req,res) =>{
     try {
-        const {sectionId} = req.body 
+        const {sectionId , courseId} = req.body 
 
-        if(!sectionId){
-            return res.staus(400).json({success:false , message : "Incomplete credentials" })       
+        if(!sectionId || !courseId){
+            return res.status(400).json({success:false , message : "Incomplete credentials" })       
+        }
+        const section = await Section.findById(sectionId)
+
+        if (!section) {
+            return res.status(404).json({ success: false, message: "Section not found" });
         }
 
-        await Section.findByIdAndDelete(sectionId)        
+        if (Array.isArray(section.subSection) && section.subSection.length > 0) {
+            await SubSection.deleteMany({ _id: { $in: section.subSection } });
+        }
+        
+        await Section.findByIdAndDelete(sectionId)      
+        
+        await Course.findByIdAndUpdate(courseId , {
+            $pull : {
+                courseContent : sectionId
+            }
+        })
 
         return res.status(200).json({success:true , message : "Section deleted successfully!"})
 
     } catch (error) {
         return res.status(500).json({
-            success : false , message : "Issue while deleeting section"
+            success : false , message : "Issue while deleting section"
         })
     }
+
+    //Delete all SubSections of that section
+    //Delete the section now
+    //Pull that section._id from course
 }

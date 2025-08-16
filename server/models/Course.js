@@ -15,12 +15,11 @@ const courseSchema = new mongoose.Schema({
         type : Number , 
         required : true 
     },
-    instructor : [
+    instructor : 
         {
             type : mongoose.Schema.Types.ObjectId ,
             ref : "User"
-        }
-    ],
+        },
     whatYouWillLearn : {
         type : String
     },

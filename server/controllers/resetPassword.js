@@ -1,5 +1,6 @@
 const User = require('../models/User.js')
 const mailSender  = require('../utils/mailSender.js')
+const bcrypt = require('bcryptjs')
 
 //resetPasswordToken 
 exports.resetPasswordToken = async (req,res) =>{
@@ -26,7 +27,7 @@ exports.resetPasswordToken = async (req,res) =>{
         const url = `http://localhost:3000/update-password/${token}`
 
         //Send Mail
-        await mailSender(email , "Reset Password on Study Notion" , `Password Reset Link : ${url}  which only balid for next 15mins`)
+        await mailSender(email , "Reset Password on Study Notion" , `Password Reset Link : ${url}  which only valid for next 15mins`)
 
         //success response
         return res.status(200).json({

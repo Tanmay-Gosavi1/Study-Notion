@@ -1,6 +1,6 @@
 const SubSection = require('../models/SubSection.js')
 const Section = require('../models/Section.js')
-const uploadToCloudinary = require('../utils/imageUpload.js')
+const {imageUpload} = require('../utils/imageUpload.js')
 
 exports.createSubSection = async (req,res) =>{
     try{
@@ -12,7 +12,7 @@ exports.createSubSection = async (req,res) =>{
             return res.status(400).json({success : false , message : "Incomplete subsection's details"})
         }
 
-        const videoFileStored = await uploadToCloudinary(videoFile , process.env.FOLDER_NAME)
+        const videoFileStored = await imageUpload(videoFile , process.env.FOLDER_NAME)
 
         const newSubSection = await SubSection.create({
             title , description , duration , videoUrl : videoFileStored.secure_url
@@ -33,7 +33,7 @@ exports.createSubSection = async (req,res) =>{
 
 exports.updateSubSection = async (req,res) =>{
     try{
-        const {title , description , duration , videoUrl , subSectionId} = req.body
+        const {title , description , duration , subSectionId} = req.body
 
         const videoFile = req.files.videoFile
 
@@ -41,7 +41,7 @@ exports.updateSubSection = async (req,res) =>{
             return res.status(400).json({success : false , message : "Incomplete subsection's details"})
         }
 
-        const videoFileStored = await uploadToCloudinary(videoFile , process.env.FOLDER_NAME)
+        const videoFileStored = await imageUpload(videoFile , process.env.FOLDER_NAME)
 
         await SubSection.findByIdAndUpdate({_id: subSectionId} , {title:title , description : description , duration : duration , videoUrl : videoFileStored.secure_url} , {new:true})
 
@@ -54,13 +54,19 @@ exports.updateSubSection = async (req,res) =>{
 
 exports.deleteSubSection = async (req,res) =>{
     try{
-        const {subSectionId} = req.body
+        const {subSectionId , sectionId} = req.body
 
-        if(!subSectionId){
-            return res.status(400).json({success : false , message : "Invalid SubSectionId"})
+        if(!subSectionId || !sectionId){
+            return res.status(400).json({success : false , message : "Invalid credentials!!"})
         }
 
         await SubSection.findByIdAndDelete(subSectionId)
+
+        await Section.findByIdAndUpdate(sectionId , {
+            $pull:{
+                subSection : subSectionId 
+            }
+        })
 
         return res.status(200).json({success : true , message: "Subsection deleted successfully"})
 
