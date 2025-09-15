@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import HighlightText from './HighlightText'
-import coursesData from '../../data/data';
+import coursesData from '../../../data/data';
 import Card from './Card';
 
 const ExploreMore = () => {
@@ -51,6 +51,7 @@ const ExploreMore = () => {
                           level = {element.level}
                           lessons = {element.lessons}
                           currCourse={currCourse}
+                          setCurrCourse={setCurrCourse}
                           element={element}
                     />
                 ))

@@ -83,7 +83,8 @@ exports.updateDisplayPicture = async (req,res) =>{
         const user = await User.findByIdAndUpdate(id , {image:url})
 
         return res.status(200).json({success : true , message : "Profile pic updated"})
-    } catch (error) {
+    } 
+    catch (error) {
         return res.status(500).json({success:false , message :"Issue while updating profile pic"})
     }
 }

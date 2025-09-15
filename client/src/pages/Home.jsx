@@ -9,14 +9,14 @@ import ExploreMore from '../components/core/Homepage/ExploreMore';
 
 const Home = () => {
   return (
-    <div>
+    <div className='mt-6'>
 
         {/* Section 1 */}
         <div className='relative mx-auto flex flex-col w-11/12 items-center justify-between text-white outline-none'>
             {/* Starter */}
             <div className='flex flex-col items-center'>
                 <Link to={'/signup'} className='outline-none'>
-                    <div className='w-fit p-1 group bg-[#161d29] rounded-full  mt-16 transition-all duration-200 hover: hover:scale-95 outline-none border-none'>
+                    <div className='w-fit p-1 group bg-[#161d29] rounded-full  mt-16 transition-all duration-200 hover:scale-95 outline-none border-none'>
                         <div className='px-9 text-lg py-1.5 flex rounded-full justify-center items-center gap-3 font-bold group-hover:bg-[#000814] outline-none'>
                             <p>Become an Instructor</p>
                             <span>
