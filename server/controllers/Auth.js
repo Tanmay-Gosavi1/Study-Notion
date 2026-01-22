@@ -12,46 +12,49 @@ const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
 
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res
         .status(401)
-        .json({ success: false, message: "user already exists" });
+        .json({ success: false, message: "User already exists" });
     }
 
-    const otp = otpGenerator.generate(6, {
+    let otp = otpGenerator.generate(6, {
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,
       specialChars: false,
     });
 
+    // Ensure OTP is unique
     let isOtpExists = await OTP.findOne({ otp: otp });
-
     while (isOtpExists) {
-      const otp = otpGenerator.generate(6, {
+      otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
         lowerCaseAlphabets: false,
         specialChars: false,
       });
-
       isOtpExists = await OTP.findOne({ otp: otp });
     }
 
-    const newOTP = new OTP({
+    // Create OTP entry - email will be sent via pre-save middleware
+    const newOTP = await OTP.create({
       email,
-      otp: otp,
+      otp,
     });
 
-    await newOTP.save();
-
-    await mailSender(email , "Verify OTP" , `OTP is ${otp}`)
+    console.log("OTP generated for:", email)
 
     return res
       .status(200)
-      .json({ success: true, message: "OTP send successfully" , otp});
+      .json({ success: true, message: "OTP sent successfully" });
   } catch (error) {
-    return res.status(500).json({success:false , message : error.message})
+    console.log("Send OTP Error:", error)
+    return res.status(500).json({ success: false, message: "Failed to send OTP. Please try again." })
   }
 };
 
@@ -126,7 +129,7 @@ const signup = async (req, res) => {
 const login = async (req,res)=>{
     const {email , password} = req.body ;
     if(!email || !password){
-        return res.ststus(400).json({success:false , message : "Incomplete credentials!"})
+        return res.status(400).json({success:false , message : "Incomplete credentials!"})
     }
 
     try{
@@ -145,16 +148,25 @@ const login = async (req,res)=>{
             })
         }
 
-        let token = jwt.sign({id : user._id , accountType : user.accountType} , process.env.JWT_SECRET , {expiresIn : '7d'})
+        let token = jwt.sign({id : user._id , email: user.email, accountType : user.accountType} , process.env.JWT_SECRET , {expiresIn : '7d'})
 
-        const response = res.cookie("token" , token  , {
+        // Set cookie
+        res.cookie("token" , token  , {
             httpOnly : true ,
             secure : process.env.NODE_ENV === 'production' ,
-            sameSite : "strict" ,
+            sameSite : process.env.NODE_ENV === 'production' ? "none" : "lax" ,
             maxAge : 7*24*60*60*1000
         })
 
-        return res.status(200).json({success:true , message : "Logged In Successfully!"})
+        // Remove password from response
+        user.password = undefined
+
+        return res.status(200).json({
+            success:true , 
+            message : "Logged In Successfully!",
+            token,
+            user
+        })
     }
     catch(err){
         return res.status(500).json({success :false, message : err.message})
@@ -163,12 +175,16 @@ const login = async (req,res)=>{
 
 //logout
 const logout = async (req,res)=>{
-    return await res.clearCookie({
-        httpOnly : true ,
-        secure : process.env.NODE_ENV === 'production' ,
-        sameSite : "strict" ,
-        maxAge : 7*24*60*60*1000
-    })
+    try {
+        res.clearCookie("token", {
+            httpOnly : true ,
+            secure : process.env.NODE_ENV === 'production' ,
+            sameSite : process.env.NODE_ENV === 'production' ? "none" : "lax"
+        })
+        return res.status(200).json({success: true, message: "Logged out successfully"})
+    } catch (error) {
+        return res.status(500).json({success: false, message: "Error while logging out"})
+    }
 }
 
 //changePassword

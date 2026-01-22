@@ -8,8 +8,9 @@ const {resetPasswordToken , resetPassword} = require('../controllers/resetPasswo
 router.post('/login' , login)
 router.post('/signup' ,signup)
 router.post('/sendotp' , sendOTP)
+router.post('/logout', logout)
 router.post('/changepassword', auth , changePassword)
-router.post('/reset-password-token', auth , resetPasswordToken)
-router.post('/reset-password', auth , resetPassword)
+router.post('/reset-password-token', resetPasswordToken)
+router.post('/reset-password', resetPassword)
 
 module.exports = router ;
